@@ -158,11 +158,8 @@ class polarizationspectra:
         # will fail. So no explicit check of vector length is needed.
 
         # Convert coordinates into ICRS and Galactic:
-        u.deg = u.core._recreate_irreducible_unit(u.Unit, ["deg", "degree"], True)
-        for unit in (u.deg, u.hour, u.hourangle, u.Jy, u.arcsec, u.arcmin, u.beam):
-            u.core.get_current_unit_registry().add_enabled_units([unit])
         coordinates = SkyCoord(
-            long_array, lat_array, frame=coordinate_system, unit="deg"
+            long_array * u.deg, lat_array * u.deg, frame=coordinate_system,
         )
         ra_column = Column(
             data=coordinates.icrs.ra.deg,
