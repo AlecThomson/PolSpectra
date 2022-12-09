@@ -11,9 +11,9 @@ selections of the table, merging tables, etc).
 
 import os
 import numpy as np
-import astropy.io.fits as pf
-import astropy.table as at
-import astropy.coordinates as ac
+from astropy.io import fits
+from astropy.table import Table, Column, vstack
+from astropy.coordinates import SkyCoord
 import astropy.io.votable as vot
 import h5py
 from tqdm.auto import tqdm
@@ -50,7 +50,7 @@ class polarizationspectra:
         self.Nrows = 0  #number of rows in the table
         self.Nsrc = 0  #number of unique sources in the table. A useful property
                      #to access for adding new sources with unique numbers.
-        self.table=at.Table()  #Empty table.
+        self.table=Table()  #Empty table.
         self.columns=[]  #A convnient list of column names (as strings)
         self.table.meta['VERSION']=0.2
         #Version 0.2: updated after first round of coauthor comments
@@ -136,15 +136,15 @@ class polarizationspectra:
         #will fail. So no explicit check of vector length is needed.
 
         #Convert coordinates into ICRS and Galactic:
-        coordinates=ac.SkyCoord(long_array,lat_array,
+        coordinates=SkyCoord(long_array,lat_array,
                                 frame=coordinate_system,unit='deg')
-        ra_column=at.Column(data=coordinates.icrs.ra.deg,name='ra',
+        ra_column=Column(data=coordinates.icrs.ra.deg,name='ra',
                             description='Right Ascension',unit='deg')
-        dec_column=at.Column(data=coordinates.icrs.dec.deg,name='dec',
+        dec_column=Column(data=coordinates.icrs.dec.deg,name='dec',
                             description='Declination',unit='deg')
-        glon_column=at.Column(data=coordinates.galactic.l.deg,name='l',
+        glon_column=Column(data=coordinates.galactic.l.deg,name='l',
                             description='Galactic Longitude',unit='deg')
-        glat_column=at.Column(data=coordinates.galactic.b.deg,name='b',
+        glat_column=Column(data=coordinates.galactic.b.deg,name='b',
                             description='Galactic Latitude',unit='deg')
 
 
@@ -162,33 +162,33 @@ class polarizationspectra:
         #it is necessary to ensure that the column headers know absolutely NOTHING
         # about the number of channels. The list comprehension is necesary to pass
         #2D numpy arrays into the column.
-        freq_column=at.Column(name='freq',dtype='object',shape=(),length=self.Nrows,
+        freq_column=Column(name='freq',dtype='object',shape=(),length=self.Nrows,
                             description='Channel Frequency',unit='Hz')
         freq_column[:]=[x for x in freq_2D]
 
-        stokesI_column=at.Column(name='stokesI',dtype='object',shape=(),length=self.Nrows,
+        stokesI_column=Column(name='stokesI',dtype='object',shape=(),length=self.Nrows,
                             description='Stokes I per channel')
         stokesI_column[:]=[x for x in stokesI]
 
-        stokesI_error_column=at.Column(name='stokesI_error',shape=(),length=self.Nrows,
+        stokesI_error_column=Column(name='stokesI_error',shape=(),length=self.Nrows,
                            dtype='object',description='stokesI error per channel')
         stokesI_error_column[:]=[x for x in stokesI_error]
 
-        stokesQ_column=at.Column(name='stokesQ',dtype='object',shape=(),length=self.Nrows,
+        stokesQ_column=Column(name='stokesQ',dtype='object',shape=(),length=self.Nrows,
                             description='Stokes Q per channel')
         stokesQ_column[:]=[x for x in stokesQ]
-        stokesQ_error_column=at.Column(name='stokesQ_error',shape=(),length=self.Nrows,
+        stokesQ_error_column=Column(name='stokesQ_error',shape=(),length=self.Nrows,
                            dtype='object',description='Stokes Q error per channel')
         stokesQ_error_column[:]=[x for x in stokesQ_error]
 
-        stokesU_column=at.Column(name='stokesU',dtype='object',shape=(),length=self.Nrows,
+        stokesU_column=Column(name='stokesU',dtype='object',shape=(),length=self.Nrows,
                             description='Stokes U per channel')
         stokesU_column[:]=[x for x in stokesU]
-        stokesU_error_column=at.Column(name='stokesU_error',shape=(),length=self.Nrows,
+        stokesU_error_column=Column(name='stokesU_error',shape=(),length=self.Nrows,
                            dtype='object',description='Stokes U error per channel')
         stokesU_error_column[:]=[x for x in stokesU_error]
 
-        source_number_column=at.Column(data=source_number_array,name='source_number',
+        source_number_column=Column(data=source_number_array,name='source_number',
                        dtype='int',description='Source ID number in file',unit='')
 
         #Set the number of sources (based on unique entries in the source number column).
@@ -200,18 +200,18 @@ class polarizationspectra:
         #astropy assigns a length), and each element needs to be an array or list
         # (otherwise pyFITS cries). This needs to be done for any column that
         #might be a mixture of single entries and arrays (mixed 1D and 2D).
-        beam_maj_column=at.Column(length=self.Nrows,
+        beam_maj_column=Column(length=self.Nrows,
                name='beam_maj',dtype='object',unit='deg',
                description='Beam major axis in deg')
         beam_maj_column[:]=[ [x] if np.array(x).ndim == 0 else x for x in _possible_scalar_to_1D(beam_maj,self.Nrows)]
 
 
-        beam_min_column=at.Column(length=self.Nrows,
+        beam_min_column=Column(length=self.Nrows,
                name='beam_min',dtype='object',unit='deg',
                description='Beam minor axis in deg')
         beam_min_column[:]=[ [x] if np.array(x).ndim == 0 else x for x in _possible_scalar_to_1D(beam_min,self.Nrows)]
 
-        beam_pa_column=at.Column(length=self.Nrows,
+        beam_pa_column=Column(length=self.Nrows,
                name='beam_pa',dtype='object',unit='deg',
                description='Beam position angle in deg')
         beam_pa_column[:]=[ [x] if np.array(x).ndim == 0 else x for x in _possible_scalar_to_1D(beam_pa,self.Nrows)]
@@ -222,11 +222,11 @@ class polarizationspectra:
         Nchan_array=np.zeros(self.Nrows)
         for i in range(self.Nrows):
             Nchan_array[i]=len(freq_column[i])
-        Nchan_column=at.Column(data=Nchan_array,name='Nchan',
+        Nchan_column=Column(data=Nchan_array,name='Nchan',
                    dtype='int',description='Number of channels')
 
         #Assemble basic table:
-        self.table=at.Table([source_number_column,ra_column,dec_column,
+        self.table=Table([source_number_column,ra_column,dec_column,
                              glon_column, glat_column,
                              freq_column,
                              stokesI_column,stokesI_error_column,
@@ -238,31 +238,31 @@ class polarizationspectra:
 
         #Now adding the optional columns:
         if stokesV is not None: #Check that both Stokes V and error are supplied?
-            stokesV_column=at.Column(name='stokesV',dtype='object',shape=(),length=self.Nrows,
+            stokesV_column=Column(name='stokesV',dtype='object',shape=(),length=self.Nrows,
                             description='Stokes V per channel')
             stokesV_column[:]=[x for x in stokesV]
             self.table.add_column(stokesV_column)
 
-            stokesV_error_column=at.Column(name='stokesV_error',shape=(),length=self.Nrows,
+            stokesV_error_column=Column(name='stokesV_error',shape=(),length=self.Nrows,
                            dtype='object',description='Stokes V error per channel')
             stokesV_error_column[:]=[x for x in stokesV_error]
             self.table.add_column(stokesV_error_column)
 
         if quality is not None: #Check quality is 2d?
-            quality_column=at.Column(name='quality',dtype='object',shape=(),length=self.Nrows,
+            quality_column=Column(name='quality',dtype='object',shape=(),length=self.Nrows,
                             description='Quality flags per channel')
             quality_column[:]=[x for x in quality]
             self.table.add_column(quality_column)
 
         if quality_meanings is not None:
-            quality_meanings_column=at.Column(
+            quality_meanings_column=Column(
                         data=_possible_scalar_to_1D(quality_meanings,self.Nrows),
                         name='quality_meanings',dtype='str',
                         description='Description of quality flag meanings')
             self.table.add_column(quality_meanings_column)
 
         if ionosphere is not None:
-            ionosphere_column=at.Column(
+            ionosphere_column=Column(
                         data=_possible_scalar_to_1D(ionosphere,self.Nrows),
                         name='ionosphere',dtype='str',
                         description='Ionospheric correction method')
@@ -270,39 +270,39 @@ class polarizationspectra:
 
 
         if cat_id is not None:
-            source_name_column=at.Column(data=cat_id,name='cat_id',dtype='str',
+            source_name_column=Column(data=cat_id,name='cat_id',dtype='str',
                             description='Source name')
             self.table.add_column(source_name_column)
 
         if dataref is not None:
-            dataref_column=at.Column(data=_possible_scalar_to_1D(dataref,self.Nrows),
+            dataref_column=Column(data=_possible_scalar_to_1D(dataref,self.Nrows),
                                          name='dataref',dtype='str',
                             description='Reference to data paper')
             self.table.add_column(dataref_column)
 
         if telescope is not None:
-            telescope_column=at.Column(
+            telescope_column=Column(
                         data=_possible_scalar_to_1D(telescope,self.Nrows),
                         name='telescope',dtype='str',
                         description='Telescope')
             self.table.add_column(telescope_column)
 
         if epoch is not None:
-            epoch_column=at.Column(
+            epoch_column=Column(
                         data=_possible_scalar_to_1D(epoch,self.Nrows),
                         name='epoch',dtype='float',
                         description='Observation Epoch (midpoint, MJD)',unit='d')
             self.table.add_column(epoch_column)
 
         if integration_time is not None:
-            integration_time_column=at.Column(
+            integration_time_column=Column(
                         data=_possible_scalar_to_1D(integration_time,self.Nrows),
                         name='integration_time',dtype='float',
                         description='Integration time (observation duration, s)',unit='s')
             self.table.add_column(integration_time_column)
 
         if interval is not None:
-            interval_column=at.Column(
+            interval_column=Column(
                         data=_possible_scalar_to_1D(interval,self.Nrows),
                         name='interval',dtype='float',
                         description='Interval of observation (days)',unit='d')
@@ -311,7 +311,7 @@ class polarizationspectra:
 
         if leakage is not None: #Like the beam columns, could be scalar, 1D, or 2D.
         #Thus slightly complicated to deal with.
-             leakage_column=at.Column(length=self.Nrows,
+             leakage_column=Column(length=self.Nrows,
                         name='leakage',dtype='object',unit='',
                         description='Estimated leakage fraction')
              leakage_column[:]=[ [x] if np.array(x).ndim == 0 else x for x in _possible_scalar_to_1D(leakage,self.Nrows)]
@@ -320,7 +320,7 @@ class polarizationspectra:
 
         if channel_width is not None:  #Like the beam columns, could be scalar, 1D, or 2D.
         #Thus slightly complicated to deal with.
-             channel_width_column=at.Column(length=self.Nrows,
+             channel_width_column=Column(length=self.Nrows,
                         data=_possible_scalar_to_1D(channel_width,self.Nrows),
                         name='channel_width',dtype='object',unit='Hz',
                         description='Channel bandwidth [Hz]')
@@ -329,7 +329,7 @@ class polarizationspectra:
 
 
         if flux_type is not None:
-            flux_type_column=at.Column(
+            flux_type_column=Column(
                         data=_possible_scalar_to_1D(flux_type,self.Nrows),
                         name='flux_type',dtype='str',
                         description='Stokes extraction method')
@@ -337,7 +337,7 @@ class polarizationspectra:
 
 
         if aperture is not None:
-            aperture_column=at.Column(
+            aperture_column=Column(
                         data=_possible_scalar_to_1D(aperture,self.Nrows),
                         name='aperture',dtype='float',unit='deg',
                         description='Integration aperture (diameter, deg)')
@@ -360,7 +360,7 @@ class polarizationspectra:
             units : str
                 Physical unit of the column quantity, if any (optional)
             """
-        new_column=at.Column(
+        new_column=Column(
                         data=_possible_scalar_to_1D(values,self.Nrows),
                         name=name,unit=units,
                         description=description)
@@ -388,7 +388,7 @@ class polarizationspectra:
             if len(values[i]) != self['Nchan'][i]:
                 raise Exception("New column doesn't have same number of channels as rest of table, on row {}.".format(i))
 
-        new_column=at.Column(length=self.Nrows,
+        new_column=Column(length=self.Nrows,
                         name=name,unit=units,dtype='object',
                         description=description)
         new_column[:]=[x for x in values]
@@ -422,7 +422,7 @@ class polarizationspectra:
             key=[key,]
 
         val=self.table[key]
-        if isinstance(val,at.table.Table):
+        if isinstance(val,Table):
             polspec=polarizationspectra()
             polspec.table=val
             polspec.Nrows=len(val)
@@ -456,20 +456,20 @@ class polarizationspectra:
         for col in self.table.colnames:
             tabcol=self.table[col]
             if tabcol.dtype != np.dtype('object'): #Normal columns
-                col_format=pf.column._convert_record2fits(tabcol.dtype)
+                col_format=fits.column._convert_record2fits(tabcol.dtype)
             else: #Channelized columns
                 subtype=np.result_type(np.array(tabcol[0])) #get the type of each element in 2D array
-                col_format='Q'+pf.column._convert_record2fits(subtype)+'()'
+                col_format='Q'+fits.column._convert_record2fits(subtype)+'()'
             if tabcol.unit != None:
                 unit=tabcol.unit.to_string()
             else:
                 unit=''
-            pfcol=pf.Column(name=tabcol.name,unit=unit,
+            pfcol=fits.Column(name=tabcol.name,unit=unit,
                             array=tabcol.data,format=col_format)
             fits_columns.append(pfcol)
             col_descriptions.append(tabcol.description)
 
-        tablehdu=pf.BinTableHDU.from_columns(fits_columns)
+        tablehdu=fits.BinTableHDU.from_columns(fits_columns)
         tablehdu.writeto(filename,overwrite=overwrite)
 
     def write_HDF5(self, filename, overwrite=False, compress=True):
@@ -533,7 +533,7 @@ class polarizationspectra:
                 else object
                 for col in first_row.keys()
             ]
-            self.table = at.Table(
+            self.table = Table(
                 names=columns,
                 units=units,
                 descriptions=descs,
@@ -558,10 +558,10 @@ class polarizationspectra:
         Parameters:
             filename: str
                 Relative path and name of file to read from."""
-        hdu=pf.open(filename)
+        hdu=fits.open(filename)
         data=hdu[1].data
         header=hdu[1].header
-        self.table=at.Table(data)
+        self.table=Table(data)
         #The FITS to table conversion doesn't carry the units, so this needs
         #to be done manually:
         for i in range(1,header['TFIELDS']+1):
@@ -639,7 +639,7 @@ class polarizationspectra:
             add_table['source_number']=(add_table['source_number']-
                 np.min(add_table['source_number'])+np.max(self.table['source_number'])+1 )
 
-        merged_table=at.vstack([self.table,add_table],
+        merged_table=vstack([self.table,add_table],
                                join_type=merge_type,metadata_conflicts='error')
         self.table=merged_table
         self.Nsrc=len(np.unique(self.table['source_number']))
@@ -756,7 +756,7 @@ class polarizationspectra:
                                 as-is (after grouping).
         """
         #Create SkyCoord objects for all rows:
-        positions=ac.SkyCoord(ra=self.table['ra'],dec=self.table['dec'],
+        positions=SkyCoord(ra=self.table['ra'],dec=self.table['dec'],
                     frame='icrs',unit='deg')
 
         #Per row, find neighbours in later part of table.
