@@ -3,24 +3,29 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
-NAME = 'Polspectra'
-DESCRIPTION = 'Reading, writing, and manipulating radio astronomy polarization (Stokes) spectra.'
-URL = 'https://github.com/CIRADA-Tools/PolSpectra'
-REQUIRES_PYTHON = '>=3.5.0'
-VERSION = '1.1.0'
+NAME = "Polspectra"
+DESCRIPTION = (
+    "Reading, writing, and manipulating radio astronomy polarization (Stokes) spectra."
+)
+URL = "https://github.com/CIRADA-Tools/PolSpectra"
+REQUIRES_PYTHON = ">=3.5.0"
+VERSION = "1.1.0"
 
 REQUIRED = [
-    'numpy', 'astropy', 'h5py', 'tqdm',
+    "numpy",
+    "astropy",
+    "h5py",
+    "tqdm",
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 
 try:
-    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-        long_description = '\n' + f.read()
+    with io.open(os.path.join(here, "README.md"), encoding="utf-8") as f:
+        long_description = "\n" + f.read()
 except FileNotFoundError:
     long_description = DESCRIPTION
 
@@ -29,23 +34,22 @@ setup(
     version=VERSION,
     description=DESCRIPTION,
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    py_modules=['polspectra'],
+    py_modules=["polspectra"],
     install_requires=REQUIRED,
     include_package_data=True,
-    license='MIT',
+    license="MIT",
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Intended Audience :: Science/Research',
-        'Topic :: Scientific/Engineering :: Astronomy',
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Astronomy",
     ],
-    maintainer='Cameron Van Eck',
-    maintainer_email='cameron.van.eck@utoronto.ca',
+    maintainer="Cameron Van Eck",
+    maintainer_email="cameron.van.eck@utoronto.ca",
 )
-
