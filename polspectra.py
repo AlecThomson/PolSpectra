@@ -165,25 +165,25 @@ class polarizationspectra:
             data=coordinates.icrs.ra.deg,
             name="ra",
             description="Right Ascension",
-            unit="deg",
+            unit=u.deg,
         )
         dec_column = Column(
             data=coordinates.icrs.dec.deg,
             name="dec",
             description="Declination",
-            unit="deg",
+            unit=u.deg,
         )
         glon_column = Column(
             data=coordinates.galactic.l.deg,
             name="l",
             description="Galactic Longitude",
-            unit="deg",
+            unit=u.deg,
         )
         glat_column = Column(
             data=coordinates.galactic.b.deg,
             name="b",
             description="Galactic Latitude",
-            unit="deg",
+            unit=u.deg,
         )
 
         # frequency array may be 1D (if all sources have same channels),
@@ -205,7 +205,7 @@ class polarizationspectra:
             shape=(),
             length=self.Nrows,
             description="Channel Frequency",
-            unit="Hz",
+            unit=u.Hz,
         )
         freq_column[:] = [x for x in freq_2D]
 
@@ -266,7 +266,7 @@ class polarizationspectra:
             name="source_number",
             dtype="int",
             description="Source ID number in file",
-            unit="",
+            unit=u.dimensionless_unscaled,
         )
 
         # Set the number of sources (based on unique entries in the source number column).
@@ -282,7 +282,7 @@ class polarizationspectra:
             length=self.Nrows,
             name="beam_maj",
             dtype="object",
-            unit="deg",
+            unit=u.deg,
             description="Beam major axis in deg",
         )
         beam_maj_column[:] = [
@@ -294,7 +294,7 @@ class polarizationspectra:
             length=self.Nrows,
             name="beam_min",
             dtype="object",
-            unit="deg",
+            unit=u.deg,
             description="Beam minor axis in deg",
         )
         beam_min_column[:] = [
@@ -306,7 +306,7 @@ class polarizationspectra:
             length=self.Nrows,
             name="beam_pa",
             dtype="object",
-            unit="deg",
+            unit=u.deg,
             description="Beam position angle in deg",
         )
         beam_pa_column[:] = [
@@ -428,7 +428,7 @@ class polarizationspectra:
                 name="epoch",
                 dtype="float",
                 description="Observation Epoch (midpoint, MJD)",
-                unit="d",
+                unit=u.day,
             )
             self.table.add_column(epoch_column)
 
@@ -438,7 +438,7 @@ class polarizationspectra:
                 name="integration_time",
                 dtype="float",
                 description="Integration time (observation duration, s)",
-                unit="s",
+                unit=u.s,
             )
             self.table.add_column(integration_time_column)
 
@@ -448,7 +448,7 @@ class polarizationspectra:
                 name="interval",
                 dtype="float",
                 description="Interval of observation (days)",
-                unit="d",
+                unit=u.day,
             )
             self.table.add_column(interval_column)
 
@@ -458,7 +458,7 @@ class polarizationspectra:
                 length=self.Nrows,
                 name="leakage",
                 dtype="object",
-                unit="",
+                unit=u.dimensionless_unscaled,
                 description="Estimated leakage fraction",
             )
             leakage_column[:] = [
@@ -476,7 +476,7 @@ class polarizationspectra:
                 data=_possible_scalar_to_1D(channel_width, self.Nrows),
                 name="channel_width",
                 dtype="object",
-                unit="Hz",
+                unit=u.Hz,
                 description="Channel bandwidth [Hz]",
             )
             channel_width_column[:] = [
@@ -499,7 +499,7 @@ class polarizationspectra:
                 data=_possible_scalar_to_1D(aperture, self.Nrows),
                 name="aperture",
                 dtype="float",
-                unit="deg",
+                unit=u.deg,
                 description="Integration aperture (diameter, deg)",
             )
             self.table.add_column(aperture_column)
@@ -946,7 +946,7 @@ class polarizationspectra:
         """
         # Create SkyCoord objects for all rows:
         positions = SkyCoord(
-            ra=self.table["ra"], dec=self.table["dec"], frame="icrs", unit="deg"
+            ra=self.table["ra"], dec=self.table["dec"], frame="icrs", unit=u.deg
         )
 
         # Per row, find neighbours in later part of table.
