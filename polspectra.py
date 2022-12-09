@@ -15,6 +15,7 @@ from astropy.io import fits
 from astropy.table import Table, Column, vstack
 from astropy.coordinates import SkyCoord
 import astropy.io.votable as vot
+import astropy.units as u
 import h5py
 from tqdm.auto import tqdm
 
@@ -136,8 +137,13 @@ class polarizationspectra:
         #will fail. So no explicit check of vector length is needed.
 
         #Convert coordinates into ICRS and Galactic:
-        coordinates=SkyCoord(long_array,lat_array,
-                                frame=coordinate_system,unit='deg')
+        u.deg = u.core._recreate_irreducible_unit(u.Unit, ["deg", "degree"], True)
+        for unit in (u.deg, u.hour, u.hourangle, u.Jy, u.arcsec, u.arcmin, u.beam):
+            u.core.get_current_unit_registry().add_enabled_units([unit])
+        coordinates=SkyCoord(
+            long_array,
+            lat_array,
+            frame=coordinate_system,unit='deg')
         ra_column=Column(data=coordinates.icrs.ra.deg,name='ra',
                             description='Right Ascension',unit='deg')
         dec_column=Column(data=coordinates.icrs.dec.deg,name='dec',
